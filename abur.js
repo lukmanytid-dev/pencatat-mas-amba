@@ -1,61 +1,103 @@
-// Membuat akun default otomatis
+// 1. Buat Akun Default Otomatis (abur / 123)
 function initDefaultAccount() {
     let usersDB = JSON.parse(localStorage.getItem('usersDB')) || {};
     if (!usersDB['abur']) {
-        usersDB['abur'] = '123'; // Username: abur, Password: 123
+        usersDB['abur'] = '123';
         localStorage.setItem('usersDB', JSON.stringify(usersDB));
     }
 }
 initDefaultAccount();
 
 let isLoginMode = true;
-let currentUser = null;
 
-// --- SISTEM AKUN ---
+// 2. Cek Akses & Navigasi Halaman
+document.addEventListener("DOMContentLoaded", function() {
+    const currentUser = localStorage.getItem('loggedInUser');
+    const isLoginPage = document.getElementById('auth-section') !== null;
+    const isDashboardPage = document.getElementById('app-section') !== null;
+
+    if (isLoginPage && currentUser) {
+        // Jika sudah login tapi membuka index.html, pindah ke atok.html
+        window.location.href = 'atok.html';
+        return;
+    }
+
+    if (isDashboardPage) {
+        if (!currentUser) {
+            // Jika belum login tapi membuka atok.html, lempar ke index.html
+            window.location.href = 'index.html';
+            return;
+        } else {
+            // Tampilkan nama user dan render data
+            const userDisplay = document.getElementById('user-display');
+            if (userDisplay) userDisplay.innerText = currentUser;
+            renderNotes();
+            renderTables();
+        }
+    }
+});
+
+// --- LOGIKA LOGIN & REGISTER (index.html) ---
 function toggleAuthMode() {
     isLoginMode = !isLoginMode;
-    document.getElementById('auth-title').innerText = isLoginMode ? 'Login' : 'Daftar Akun Baru';
-    document.getElementById('auth-btn').innerText = isLoginMode ? 'Masuk' : 'Daftar';
-    document.getElementById('auth-switch').innerText = isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Login';
+    const title = document.getElementById('auth-title');
+    const btn = document.getElementById('auth-btn');
+    const switchTxt = document.getElementById('auth-switch');
+
+    if (title) title.innerText = isLoginMode ? 'Login' : 'Daftar Akun Baru';
+    if (btn) btn.innerText = isLoginMode ? 'Masuk' : 'Daftar';
+    if (switchTxt) switchTxt.innerText = isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Login';
 }
 
 function handleAuth() {
-    const user = document.getElementById('username').value.trim();
-    const pass = document.getElementById('password').value.trim();
-    if (!user || !pass) return alert("Isi Username dan Password!");
+    const userElem = document.getElementById('username');
+    const passElem = document.getElementById('password');
+
+    if (!userElem || !passElem) return;
+
+    const user = userElem.value.trim();
+    const pass = passElem.value.trim();
+
+    if (!user || !pass) {
+        alert("Isi Username dan Password!");
+        return;
+    }
 
     let usersDB = JSON.parse(localStorage.getItem('usersDB')) || {};
+
     if (isLoginMode) {
-        if (usersDB[user] === pass) login(user);
-        else alert("Username/Password salah!");
+        if (usersDB[user] && usersDB[user] === pass) {
+            localStorage.setItem('loggedInUser', user);
+            window.location.href = 'atok.html';
+        } else {
+            alert("Username atau Password salah!");
+        }
     } else {
-        if (usersDB[user]) alert("Username sudah terdaftar!");
-        else { usersDB[user] = pass; localStorage.setItem('usersDB', JSON.stringify(usersDB)); login(user); }
+        if (usersDB[user]) {
+            alert("Username sudah terdaftar!");
+        } else {
+            usersDB[user] = pass;
+            localStorage.setItem('usersDB', JSON.stringify(usersDB));
+            localStorage.setItem('loggedInUser', user);
+            window.location.href = 'atok.html';
+        }
     }
 }
 
-function login(username) {
-    currentUser = username;
-    document.getElementById('user-display').innerText = username;
-    document.getElementById('auth-section').style.display = 'none';
-    document.getElementById('app-section').style.display = 'block';
-    renderNotes();
-    renderTables();
-}
-
+// --- LOGIKA DASHBOARD (atok.html) ---
 function logout() {
-    currentUser = null;
-    document.getElementById('auth-section').style.display = 'block';
-    document.getElementById('app-section').style.display = 'none';
+    localStorage.removeItem('loggedInUser');
+    window.location.href = 'index.html';
 }
 
-// --- SISTEM TABEL RUSDI & MAS AMBA ---
 function getTableData(tableName) {
+    const currentUser = localStorage.getItem('loggedInUser');
     const db = JSON.parse(localStorage.getItem(tableName + 'DB')) || {};
     return db[currentUser] || [];
 }
 
 function saveTableData(tableName, data) {
+    const currentUser = localStorage.getItem('loggedInUser');
     let db = JSON.parse(localStorage.getItem(tableName + 'DB')) || {};
     db[currentUser] = data;
     localStorage.setItem(tableName + 'DB', JSON.stringify(db));
@@ -64,14 +106,20 @@ function saveTableData(tableName, data) {
 function addTableData(tableName) {
     const descInput = document.getElementById(tableName + 'Desc');
     const amountInput = document.getElementById(tableName + 'Amount');
-    if (!descInput.value || !amountInput.value) return alert("Isi keterangan dan nominal!");
+
+    if (!descInput || !amountInput) return;
+    if (!descInput.value || !amountInput.value) {
+        alert("Isi keterangan dan nominal!");
+        return;
+    }
 
     const entry = { id: Date.now(), desc: descInput.value, amount: parseInt(amountInput.value) };
     let data = getTableData(tableName);
     data.push(entry);
     saveTableData(tableName, data);
-    
-    descInput.value = ""; amountInput.value = "";
+
+    descInput.value = "";
+    amountInput.value = "";
     renderTables();
 }
 
@@ -85,9 +133,11 @@ function renderTables() {
     ['rusdi', 'amba'].forEach(tableName => {
         const tbody = document.getElementById(tableName + 'TableBody');
         const tfoot = document.getElementById(tableName + 'Total');
+        if (!tbody || !tfoot) return;
+
         const data = getTableData(tableName);
         let total = 0;
-        
+
         tbody.innerHTML = "";
         data.forEach(item => {
             total += item.amount;
@@ -103,43 +153,66 @@ function renderTables() {
     });
 }
 
-// --- SISTEM CATATAN ---
 function getNotes() {
+    const currentUser = localStorage.getItem('loggedInUser');
     const db = JSON.parse(localStorage.getItem('notesDB')) || {};
     return db[currentUser] || [];
 }
 
 function saveNotes(notes) {
+    const currentUser = localStorage.getItem('loggedInUser');
     let db = JSON.parse(localStorage.getItem('notesDB')) || {};
     db[currentUser] = notes;
     localStorage.setItem('notesDB', JSON.stringify(db));
 }
 
 function addNote() {
-    const title = document.getElementById("noteTitle").value.trim() || "Tanpa Judul";
-    const content = document.getElementById("noteContent").value.trim();
-    if (!content) return alert("Isi catatan kosong!");
+    const titleInput = document.getElementById("noteTitle");
+    const contentInput = document.getElementById("noteContent");
+
+    if (!contentInput) return;
+
+    const title = titleInput.value.trim() || "Tanpa Judul";
+    const content = contentInput.value.trim();
+
+    if (!content) {
+        alert("Isi catatan kosong!");
+        return;
+    }
 
     const nums = content.match(/\d+/g);
     const total = nums ? nums.reduce((sum, n) => sum + parseInt(n), 0) : 0;
     const note = { id: Date.now(), title, content, total, date: new Date().toLocaleString("id-ID") };
 
-    let notes = getNotes(); notes.unshift(note); saveNotes(notes);
-    document.getElementById("noteTitle").value = ""; document.getElementById("noteContent").value = "";
+    let notes = getNotes();
+    notes.unshift(note);
+    saveNotes(notes);
+
+    if (titleInput) titleInput.value = "";
+    contentInput.value = "";
     renderNotes();
 }
 
 function renderNotes() {
     const container = document.getElementById("notesContainer");
-    container.innerHTML = ""; 
+    if (!container) return;
+
+    container.innerHTML = "";
     getNotes().forEach(note => {
-        const div = document.createElement("div"); div.classList.add("note-card");
+        const div = document.createElement("div");
+        div.classList.add("note-card");
         div.innerHTML = `
-            <button class="delete-btn" onclick="let n=getNotes().filter(i=>i.id!==${note.id});saveNotes(n);renderNotes()">X</button>
+            <button class="delete-btn" onclick="deleteNoteItem(${note.id})">X</button>
             <h3 style="margin:0 0 5px 0;">${note.title}</h3>
             <p style="white-space:pre-wrap; margin:0 0 10px 0;">${note.content}</p>
             <div class="note-stats">💰 Total Angka: <strong>Rp ${new Intl.NumberFormat('id-ID').format(note.total)}</strong></div>
         `;
         container.appendChild(div);
     });
+}
+
+function deleteNoteItem(id) {
+    let notes = getNotes().filter(i => i.id !== id);
+    saveNotes(notes);
+    renderNotes();
 }
