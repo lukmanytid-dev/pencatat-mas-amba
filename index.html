@@ -3,36 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Pencatat & Kalkulator</title>
+    <title>Login - Aplikasi Pencatat</title>
     <style>
         :root { --primary: #4a90e2; --bg: #f4f7f6; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 800px; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1, h2, h3 { text-align: center; color: var(--primary); }
-        input, textarea, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { width: 100%; max-width: 400px; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 20px; }
+        input, button { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #357abd; }
-        .btn-danger { background-color: #e74c3c; }
-        .btn-danger:hover { background-color: #c0392b; }
-        
-        /* Note Cards */
-        .note-card { background: #fff; border-left: 5px solid var(--primary); padding: 15px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
-        .note-stats { background: #e8f4fd; padding: 10px; border-radius: 5px; font-size: 13px; margin-top: 10px; color: #2c3e50; }
-        .delete-btn { position: absolute; top: 15px; right: 15px; width: auto; padding: 5px 10px; background: #ff4c4c; font-size: 12px; margin: 0; }
-        
-        /* Tables */
-        .table-section { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
-        .input-row { display: flex; gap: 10px; }
-        .input-row input { flex: 1; }
-        .input-row button { width: 120px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
-        th { background-color: var(--primary); color: white; }
-        tfoot { font-weight: bold; background-color: #e8f4fd; }
-        .delete-td { text-align: center; width: 50px; cursor: pointer; color: red; font-weight: bold; }
-        
-        #app-section { display: none; }
-        .auth-toggle { text-align: center; font-size: 14px; cursor: pointer; color: var(--primary); }
+        .auth-toggle { text-align: center; font-size: 14px; cursor: pointer; color: var(--primary); margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -46,53 +26,7 @@
         <p class="auth-toggle" onclick="toggleAuthMode()" id="auth-switch">Belum punya akun? Daftar di sini</p>
     </div>
 
-    <!-- BAGIAN APLIKASI CATATAN & TABEL -->
-    <div class="container" id="app-section">
-        <h2>Halo, <span id="user-display"></span>!</h2>
-        <button onclick="logout()" class="btn-danger" style="margin-bottom: 20px;">Logout</button>
-        
-        <!-- TABEL RUSDI BARBERSHOP -->
-        <div class="table-section">
-            <h3>💈 Tabel Rusdi Barbershop</h3>
-            <div class="input-row">
-                <input type="text" id="rusdiDesc" placeholder="Keterangan (Cukur Rambut, dll)">
-                <input type="number" id="rusdiAmount" placeholder="Nominal (Rp)">
-                <button onclick="addTableData('rusdi')">Tambah</button>
-            </div>
-            <table>
-                <thead><tr><th>Keterangan</th><th>Nominal (Rp)</th><th>Hapus</th></tr></thead>
-                <tbody id="rusdiTableBody"></tbody>
-                <tfoot><tr><td>Total Pemasukan</td><td colspan="2" id="rusdiTotal">Rp 0</td></tr></tfoot>
-            </table>
-        </div>
-
-        <!-- TABEL SOSIS GORENG MAS AMBA -->
-        <div class="table-section">
-            <h3>🌭 Tabel Sosis Goreng Mas Amba</h3>
-            <div class="input-row">
-                <input type="text" id="ambaDesc" placeholder="Keterangan (Jual Sosis, Saos, dll)">
-                <input type="number" id="ambaAmount" placeholder="Nominal (Rp)">
-                <button onclick="addTableData('amba')">Tambah</button>
-            </div>
-            <table>
-                <thead><tr><th>Keterangan</th><th>Nominal (Rp)</th><th>Hapus</th></tr></thead>
-                <tbody id="ambaTableBody"></tbody>
-                <tfoot><tr><td>Total Pemasukan</td><td colspan="2" id="ambaTotal">Rp 0</td></tr></tfoot>
-            </table>
-        </div>
-
-        <hr style="margin: 30px 0; border: 1px solid #ddd;">
-
-        <!-- CATATAN UMUM -->
-        <h3>📝 Catatan Umum</h3>
-        <input type="text" id="noteTitle" placeholder="Judul Catatan">
-        <textarea id="noteContent" rows="3" placeholder="Tulis catatan (contoh: Apel 5000)"></textarea>
-        <button onclick="addNote()">Simpan Catatan & Hitung</button>
-
-        <div id="notesContainer"></div>
-    </div>
-
-    <!-- Panggil file abur.js di sini -->
+    <!-- Panggil Javascript -->
     <script src="abur.js"></script>
 </body>
 </html>
