@@ -125,3 +125,33 @@ app.delete('/api/tables/:id', async (req, res) => {
 app.use(express.static(path.join(__dirname, '../public')));
 
 module.exports = app;
+
+-- 1. Tabel untuk menyimpan data akun pengguna
+CREATE TABLE IF NOT EXISTS users (
+    username VARCHAR(50) PRIMARY KEY,
+    password VARCHAR(100) NOT NULL
+);
+
+-- 2. Tabel untuk catatan umum
+CREATE TABLE IF NOT EXISTS notes (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50),
+    title TEXT,
+    content TEXT,
+    total NUMERIC,
+    date TEXT
+);
+
+-- 3. Tabel untuk data pencatatan toko (Rusdi Barbershop & Sosis Mas Amba)
+CREATE TABLE IF NOT EXISTS tables_data (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50),
+    table_name VARCHAR(20),
+    description TEXT,
+    amount NUMERIC
+);
+
+-- Masukkan akun default 'abur' / '123'
+INSERT INTO users (username, password) 
+VALUES ('anjay', 'akuadmin') 
+ON CONFLICT (username) DO NOTHING;
