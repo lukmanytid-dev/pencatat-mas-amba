@@ -17,18 +17,15 @@ document.addEventListener("DOMContentLoaded", function() {
     const isDashboardPage = document.getElementById('app-section') !== null;
 
     if (isLoginPage && currentUser) {
-        // Jika sudah login tapi membuka index.html, pindah ke atok.html
-        window.location.href = 'atok.html';
+        window.location.replace('./atok.html');
         return;
     }
 
     if (isDashboardPage) {
         if (!currentUser) {
-            // Jika belum login tapi membuka atok.html, lempar ke index.html
-            window.location.href = 'index.html';
+            window.location.replace('./index.html');
             return;
         } else {
-            // Tampilkan nama user dan render data
             const userDisplay = document.getElementById('user-display');
             if (userDisplay) userDisplay.innerText = currentUser;
             renderNotes();
@@ -68,7 +65,8 @@ function handleAuth() {
     if (isLoginMode) {
         if (usersDB[user] && usersDB[user] === pass) {
             localStorage.setItem('loggedInUser', user);
-            window.location.href = 'atok.html';
+            alert("Login Berhasil! Mengalihkan ke Dashboard...");
+            window.location.replace('./atok.html');
         } else {
             alert("Username atau Password salah!");
         }
@@ -79,7 +77,8 @@ function handleAuth() {
             usersDB[user] = pass;
             localStorage.setItem('usersDB', JSON.stringify(usersDB));
             localStorage.setItem('loggedInUser', user);
-            window.location.href = 'atok.html';
+            alert("Daftar Akun Berhasil! Mengalihkan ke Dashboard...");
+            window.location.replace('./atok.html');
         }
     }
 }
@@ -87,7 +86,7 @@ function handleAuth() {
 // --- LOGIKA DASHBOARD (atok.html) ---
 function logout() {
     localStorage.removeItem('loggedInUser');
-    window.location.href = 'index.html';
+    window.location.replace('./index.html');
 }
 
 function getTableData(tableName) {
