@@ -3,24 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Pencatat & Kalkulator</title>
+    <title>Dashboard - Database Vercel</title>
     <style>
         :root { --primary: #4a90e2; --bg: #f4f7f6; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 800px; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         h2, h3 { text-align: center; color: var(--primary); }
         input, textarea, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #357abd; }
         .btn-danger { background-color: #e74c3c; width: auto; padding: 8px 15px; }
-        .btn-danger:hover { background-color: #c0392b; }
-        
-        /* Note Cards */
         .note-card { background: #fff; border-left: 5px solid var(--primary); padding: 15px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .note-stats { background: #e8f4fd; padding: 10px; border-radius: 5px; font-size: 13px; margin-top: 10px; color: #2c3e50; }
         .delete-btn { position: absolute; top: 15px; right: 15px; width: auto; padding: 5px 10px; background: #ff4c4c; font-size: 12px; margin: 0; }
-        
-        /* Tables */
         .table-section { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
         .input-row { display: flex; gap: 10px; }
         .input-row input { flex: 1; }
@@ -30,17 +25,15 @@
         th { background-color: var(--primary); color: white; }
         tfoot { font-weight: bold; background-color: #e8f4fd; }
         .delete-td { text-align: center; width: 50px; cursor: pointer; color: red; font-weight: bold; }
-        
-        /* Header */
         .header-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
         .header-nav h2 { margin: 0; }
     </style>
 </head>
 <body>
 
-    <div class="container" id="app-section">
+    <div class="container">
         <div class="header-nav">
-            <h2>Halo, <span id="user-display"></span>!</h2>
+            <h2>Halo, <span id="user-display"></span>! (Database Online)</h2>
             <button onclick="logout()" class="btn-danger">Logout</button>
         </div>
         
@@ -48,7 +41,7 @@
         <div class="table-section">
             <h3>💈 Tabel Rusdi Barbershop</h3>
             <div class="input-row">
-                <input type="text" id="rusdiDesc" placeholder="Keterangan (Cukur Rambut, dll)">
+                <input type="text" id="rusdiDesc" placeholder="Keterangan">
                 <input type="number" id="rusdiAmount" placeholder="Nominal (Rp)">
                 <button onclick="addTableData('rusdi')">Tambah</button>
             </div>
@@ -63,7 +56,7 @@
         <div class="table-section">
             <h3>🌭 Tabel Sosis Goreng Mas Amba</h3>
             <div class="input-row">
-                <input type="text" id="ambaDesc" placeholder="Keterangan (Jual Sosis, Saos, dll)">
+                <input type="text" id="ambaDesc" placeholder="Keterangan">
                 <input type="number" id="ambaAmount" placeholder="Nominal (Rp)">
                 <button onclick="addTableData('amba')">Tambah</button>
             </div>
@@ -79,13 +72,109 @@
         <!-- CATATAN UMUM -->
         <h3>📝 Catatan Umum</h3>
         <input type="text" id="noteTitle" placeholder="Judul Catatan">
-        <textarea id="noteContent" rows="3" placeholder="Tulis catatan (contoh: Apel 5000)"></textarea>
-        <button onclick="addNote()">Simpan Catatan & Hitung</button>
+        <textarea id="noteContent" rows="3" placeholder="Tulis catatan..."></textarea>
+        <button onclick="addNote()">Simpan ke Database</button>
 
         <div id="notesContainer"></div>
     </div>
 
-    <!-- Panggil Javascript -->
-    <script src="abur.js"></script>
+    <script>
+        const currentUser = localStorage.getItem('loggedInUser');
+        if (!currentUser) window.location.href = '/index.html';
+        document.getElementById('user-display').innerText = currentUser;
+
+        function logout() {
+            localStorage.removeItem('loggedInUser');
+            window.location.href = '/index.html';
+        }
+
+        // Load Data saat halaman dibuka
+        window.onload = function() {
+            loadTables('rusdi');
+            loadTables('amba');
+            loadNotes();
+        };
+
+        async function loadTables(tableName) {
+            const res = await fetch(`/api/tables/${currentUser}/${tableName}`);
+            const data = await res.json();
+            const tbody = document.getElementById(tableName + 'TableBody');
+            const tfoot = document.getElementById(tableName + 'Total');
+            tbody.innerHTML = "";
+            let total = 0;
+            data.forEach(item => {
+                total += Number(item.amount);
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.description}</td>
+                        <td>Rp ${new Intl.NumberFormat('id-ID').format(item.amount)}</td>
+                        <td class="delete-td" onclick="deleteTable(${item.id}, '${tableName}')">X</td>
+                    </tr>
+                `;
+            });
+            tfoot.innerText = `Rp ${new Intl.NumberFormat('id-ID').format(total)}`;
+        }
+
+        async function addTableData(tableName) {
+            const desc = document.getElementById(tableName + 'Desc').value;
+            const amount = document.getElementById(tableName + 'Amount').value;
+            if (!desc || !amount) return alert("Isi semua data!");
+
+            await fetch('/api/tables', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, tableName, desc, amount })
+            });
+            document.getElementById(tableName + 'Desc').value = "";
+            document.getElementById(tableName + 'Amount').value = "";
+            loadTables(tableName);
+        }
+
+        async function deleteTable(id, tableName) {
+            await fetch(`/api/tables/${id}`, { method: 'DELETE' });
+            loadTables(tableName);
+        }
+
+        async function loadNotes() {
+            const res = await fetch(`/api/notes/${currentUser}`);
+            const notes = await res.json();
+            const container = document.getElementById('notesContainer');
+            container.innerHTML = "";
+            notes.forEach(note => {
+                container.innerHTML += `
+                    <div class="note-card">
+                        <button class="delete-btn" onclick="deleteNote(${note.id})">X</button>
+                        <h3 style="margin:0 0 5px 0;">${note.title}</h3>
+                        <p style="white-space:pre-wrap; margin:0 0 10px 0;">${note.content}</p>
+                        <div class="note-stats">💰 Total Angka: <strong>Rp ${new Intl.NumberFormat('id-ID').format(note.total)}</strong></div>
+                    </div>
+                `;
+            });
+        }
+
+        async function addNote() {
+            const title = document.getElementById('noteTitle').value || "Tanpa Judul";
+            const content = document.getElementById('noteContent').value;
+            if (!content) return alert("Isi catatan kosong!");
+
+            const nums = content.match(/\d+/g);
+            const total = nums ? nums.reduce((sum, n) => sum + parseInt(n), 0) : 0;
+            const date = new Date().toLocaleString("id-ID");
+
+            await fetch('/api/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, title, content, total, date })
+            });
+            document.getElementById('noteTitle').value = "";
+            document.getElementById('noteContent').value = "";
+            loadNotes();
+        }
+
+        async function deleteNote(id) {
+            await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+            loadNotes();
+        }
+    </script>
 </body>
 </html>
